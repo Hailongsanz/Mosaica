@@ -1,0 +1,105 @@
+{
+  "name": "Event",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the event"
+    },
+    "description": {
+      "type": "string",
+      "description": "Additional details about the event"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the event"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Start time in HH:MM format"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "End time in HH:MM format (optional)"
+    },
+    "category": {
+      "type": "string",
+      "default": "other",
+      "description": "Category for color coding"
+    },
+    "custom_color": {
+      "type": "string",
+      "description": "Custom hex color for the event (e.g. #FF5733)"
+    },
+    "location": {
+      "type": "string",
+      "description": "Location of the event"
+    },
+    "is_all_day": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is an all-day event"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a recurring event"
+    },
+    "recurrence_rule": {
+      "type": "string",
+      "description": "Recurrence pattern: daily, weekly, biweekly, monthly, yearly"
+    },
+    "recurrence_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Days of week for weekly recurrence: monday, tuesday, etc."
+    },
+    "recurrence_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the recurrence ends"
+    },
+    "parent_event_id": {
+      "type": "string",
+      "description": "ID of the parent recurring event"
+    },
+    "original_input": {
+      "type": "string",
+      "description": "The original natural language input that created this event"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the event was completed/attended"
+    },
+    "missed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the event was missed"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about the event after it occurred"
+    },
+    "reminder_amount": {
+      "type": "number",
+      "description": "Amount of time before event to send reminder"
+    },
+    "reminder_unit": {
+      "type": "string",
+      "enum": [
+        "minutes",
+        "hours",
+        "days"
+      ],
+      "description": "Unit of time for reminder"
+    }
+  },
+  "required": [
+    "title",
+    "date"
+  ]
+}

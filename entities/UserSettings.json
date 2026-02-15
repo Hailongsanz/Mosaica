@@ -1,0 +1,81 @@
+{
+  "name": "UserSettings",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user these settings belong to"
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark",
+        "system"
+      ],
+      "default": "light",
+      "description": "App theme preference"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "de",
+        "it",
+        "pt",
+        "zh",
+        "ja",
+        "ko",
+        "ar"
+      ],
+      "default": "en",
+      "description": "Preferred language"
+    },
+    "time_format": {
+      "type": "string",
+      "enum": [
+        "12h",
+        "24h"
+      ],
+      "default": "12h",
+      "description": "Time display format"
+    },
+    "week_starts_on": {
+      "type": "string",
+      "enum": [
+        "sunday",
+        "monday"
+      ],
+      "default": "sunday",
+      "description": "First day of the week"
+    },
+    "default_event_duration": {
+      "type": "number",
+      "default": 60,
+      "description": "Default event duration in minutes"
+    },
+    "notifications_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to show notifications"
+    },
+    "default_category": {
+      "type": "string",
+      "enum": [
+        "work",
+        "personal",
+        "health",
+        "social",
+        "travel",
+        "other"
+      ],
+      "default": "other",
+      "description": "Default category for new events"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}
