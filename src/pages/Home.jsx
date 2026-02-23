@@ -38,6 +38,15 @@ export default function Home() {
   const [pendingEvents, setPendingEvents] = useState([]); // Events waiting for user to fill missing info
   const [completingEvent, setCompletingEvent] = useState(null); // Event currently being completed by user
   const [userSettings, setUserSettings] = useState({ language: 'en' });
+
+  // Merge standard color overrides + custom category colors into one map
+  const effectiveCategoryColors = React.useMemo(() => {
+    const base = { ...(userSettings?.category_colors || {}) };
+    for (const cat of (userSettings?.custom_categories || [])) {
+      if (cat.slug && cat.color) base[cat.slug] = cat.color;
+    }
+    return base;
+  }, [userSettings?.category_colors, userSettings?.custom_categories]);
   
   const queryClient = useQueryClient();
   
@@ -208,6 +217,8 @@ export default function Home() {
     setIsProcessing(true);
 
     const today = new Date();
+    const userCustomCats = (userSettings?.custom_categories || []).map(c => c.slug);
+    const allCategorySlugs = ['work', 'personal', 'health', 'social', 'travel', 'other', ...userCustomCats];
     const prompt = `You are a smart assistant that extracts calendar events from natural language.
     
 Today's date is ${format(today, 'yyyy-MM-dd')} (${format(today, 'EEEE')}).
@@ -218,7 +229,7 @@ Parse the following text and extract ALL calendar events mentioned. For each eve
 - date: The date in YYYY-MM-DD format ONLY if the user explicitly mentions a date or relative day (e.g. "tomorrow", "next Monday", "March 5th", "this Friday"). If NO date is mentioned or the user says something vague like "sometime", "soon", "this week" without a specific day, return an EMPTY STRING "" for date.
 - start_time: Start time in HH:MM format (24-hour) ONLY if a specific time is mentioned. If no time is mentioned, return an EMPTY STRING "".
 - end_time: End time in HH:MM format (24-hour) ONLY if mentioned or calculable from duration. Otherwise return an EMPTY STRING "".
-- category: One of: work, personal, health, social, travel, other
+- category: One of: ${allCategorySlugs.join(', ')}. IMPORTANT: if the user mentions a word that closely matches one of the custom category names (${userCustomCats.join(', ')}), prefer that custom category slug over the generic ones.
 - location: Location if mentioned, otherwise empty string ""
 - is_all_day: true ONLY if the user explicitly says "all day" or the event clearly spans an entire day. Do NOT default to true just because no time was given.
 - is_recurring: true if the event repeats (e.g., "every Monday", "weekly", "daily")
@@ -453,7 +464,7 @@ Return a JSON array of events. For recurring events, create individual event ent
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/40 via-white to-amber-50/20 dark:bg-gradient-to-br">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
@@ -468,7 +479,7 @@ Return a JSON array of events. For recurring events, create individual event ent
           <div className="flex items-center gap-2">
             <Button 
               onClick={handleAddEvent}
-              className="rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-sm"
+              className="rounded-xl bg-amber-500 dark:bg-white hover:bg-amber-600 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-sm"
               size="sm"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -476,7 +487,7 @@ Return a JSON array of events. For recurring events, create individual event ent
             </Button>
             <Link to={createPageUrl('Settings')}>
               <Button variant="ghost" size="icon" className="rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800">
-                <Settings className="w-5 h-5 text-gray-500" />
+                <Settings className="w-5 h-5 text-amber-400 dark:text-gray-500" />
               </Button>
             </Link>
           </div>
@@ -489,24 +500,24 @@ Return a JSON array of events. For recurring events, create individual event ent
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
+          <TabsList className="bg-amber-50 dark:bg-gray-800 border border-amber-100 dark:border-transparent p-1 rounded-2xl">
             <TabsTrigger 
                               value="courage" 
-                              className="rounded-xl px-4 sm:px-6 text-gray-600 dark:text-gray-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1a] data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
+                              className="rounded-xl px-4 sm:px-6 text-amber-900/40 dark:text-gray-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1a] data-[state=active]:text-amber-600 dark:data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-amber-100 dark:data-[state=active]:border-transparent"
                             >
                               <MessageSquare className="w-4 h-4 mr-2" />
                               {t('courage')}
                             </TabsTrigger>
             <TabsTrigger 
               value="calendar"
-              className="rounded-xl px-4 sm:px-6 text-gray-600 dark:text-gray-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1a] data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="rounded-xl px-4 sm:px-6 text-amber-900/40 dark:text-gray-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1a] data-[state=active]:text-amber-600 dark:data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-amber-100 dark:data-[state=active]:border-transparent"
             >
               <CalendarDays className="w-4 h-4 mr-2" />
               {t('calendar')}
             </TabsTrigger>
             <TabsTrigger 
               value="past"
-              className="rounded-xl px-4 sm:px-6 text-gray-600 dark:text-gray-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1a] data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="rounded-xl px-4 sm:px-6 text-amber-900/40 dark:text-gray-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1a] data-[state=active]:text-amber-600 dark:data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-amber-100 dark:data-[state=active]:border-transparent"
             >
               <History className="w-4 h-4 mr-2" />
               {t('pastEvents')}
@@ -515,7 +526,22 @@ Return a JSON array of events. For recurring events, create individual event ent
 
           <TabsContent value="courage" className="mt-6">
                         <div className="max-w-3xl mx-auto">
-                          <CourageChat events={events} user={user} t={t} />
+                          <CourageChat
+                            events={events}
+                            user={user}
+                            t={t}
+                            language={userSettings?.language || 'en'}
+                            onAddEvents={async (event) => {
+                              const conflict = checkForConflicts(event);
+                              if (conflict) {
+                                setConflictData({ isOpen: true, newEvent: event, conflictingEvent: conflict });
+                                return false;
+                              }
+                              await createEventMutation.mutateAsync(event);
+                              showFeedback(t('eventAdded') || 'Event added!');
+                              return true;
+                            }}
+                          />
                         </div>
                       </TabsContent>
 
@@ -523,9 +549,9 @@ Return a JSON array of events. For recurring events, create individual event ent
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 {/* Add Event Input */}
-                <div className="bg-white dark:bg-[#2a2a2e] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-white dark:bg-[#2a2a2e] rounded-2xl shadow-sm border border-amber-100 dark:border-gray-700 p-6">
                   <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="w-5 h-5 text-gray-400" />
+                    <Sparkles className="w-5 h-5 text-amber-400 dark:text-gray-400" />
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('whatsOnSchedule')}</h2>
                   </div>
                   <ChatInput onSubmit={handleChatSubmit} isProcessing={isProcessing} t={t} />
@@ -539,7 +565,8 @@ Return a JSON array of events. For recurring events, create individual event ent
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
                   t={t}
-                  categoryColors={userSettings?.category_colors}
+                  categoryColors={effectiveCategoryColors}
+                  language={userSettings?.language || 'en'}
                 />
                 <DaySchedule 
                   date={selectedDate}
@@ -547,19 +574,21 @@ Return a JSON array of events. For recurring events, create individual event ent
                   onDeleteEvent={handleDeleteEventWithRecurringCheck}
                   onEditEvent={handleEditEventWithRecurringCheck}
                   t={t}
-                  categoryColors={userSettings?.category_colors}
+                  categoryColors={effectiveCategoryColors}
+                  language={userSettings?.language || 'en'}
                 />
               </div>
               <div className="space-y-6">
-                <SearchEvents events={events} onSelectEvent={handleSearchSelectEvent} t={t} categoryColors={userSettings?.category_colors} />
+                <SearchEvents events={events} onSelectEvent={handleSearchSelectEvent} t={t} categoryColors={effectiveCategoryColors} />
                 <UpcomingEvents 
                   events={events}
                   onEditEvent={handleEditEventWithRecurringCheck}
                   onDeleteEvent={handleDeleteEventWithRecurringCheck}
                   t={t}
-                  categoryColors={userSettings?.category_colors}
+                  categoryColors={effectiveCategoryColors}
+                  language={userSettings?.language || 'en'}
                 />
-                <WeeklyInsightsExpanded events={events} t={t} categoryColors={userSettings?.category_colors} />
+                <WeeklyInsightsExpanded events={events} t={t} categoryColors={effectiveCategoryColors} />
               </div>
             </div>
           </TabsContent>
@@ -574,7 +603,8 @@ Return a JSON array of events. For recurring events, create individual event ent
               onEditEvent={handleEditEventWithRecurringCheck}
               isSaving={updateEventMutation.isPending}
               t={t}
-              categoryColors={userSettings?.category_colors}
+              categoryColors={effectiveCategoryColors}
+              language={userSettings?.language || 'en'}
             />
           </TabsContent>
         </Tabs>
@@ -588,8 +618,7 @@ Return a JSON array of events. For recurring events, create individual event ent
                       onDelete={handleDeleteFromModal}
                       onDuplicate={handleDuplicateEvent}
                       isSaving={updateEventMutation.isPending}
-                      t={t}
-                    />
+                      t={t}                      customCategories={userSettings?.custom_categories || []}                    />
                   )}
 
                   {/* Completion modal for events with missing info */}
@@ -600,8 +629,7 @@ Return a JSON array of events. For recurring events, create individual event ent
                       onClose={handleDismissCompletion}
                       onSave={handleCompleteEvent}
                       isSaving={createEventMutation.isPending}
-                      t={t}
-                    />
+                      t={t}                      customCategories={userSettings?.custom_categories || []}                    />
                   )}
 
                   <ConflictModal
@@ -614,7 +642,7 @@ Return a JSON array of events. For recurring events, create individual event ent
                     onReplace={handleReplace}
                     isProcessing={createEventMutation.isPending || deleteEventMutation.isPending}
                     t={t}
-                    categoryColors={userSettings?.category_colors}
+                    categoryColors={effectiveCategoryColors}
                   />
 
                   <RecurringEventManager

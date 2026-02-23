@@ -47,10 +47,10 @@ export default function WeeklyInsightsExpanded({ events, t = (k) => k, categoryC
 
   if (totalEvents === 0) {
     return (
-      <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+      <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-gray-400" />
+            <BarChart3 className="w-5 h-5 text-amber-400 dark:text-gray-400" />
             {t('thisWeeksInsights')}
           </CardTitle>
         </CardHeader>
@@ -64,10 +64,10 @@ export default function WeeklyInsightsExpanded({ events, t = (k) => k, categoryC
   }
 
   return (
-    <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+    <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-gray-400" />
+          <BarChart3 className="w-5 h-5 text-amber-400 dark:text-gray-400" />
           {t('thisWeeksInsights')}
         </CardTitle>
       </CardHeader>
@@ -76,7 +76,7 @@ export default function WeeklyInsightsExpanded({ events, t = (k) => k, categoryC
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-gray-500" />
+              <Target className="w-4 h-4 text-amber-400 dark:text-gray-500" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('weeklyProgress')}</span>
             </div>
             <span className="text-sm text-gray-500 dark:text-gray-400">{completedEvents} {t('ofEvents')} {totalEvents} {t('events')}</span>

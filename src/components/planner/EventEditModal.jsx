@@ -32,7 +32,7 @@ const reminderPresets = [
   { amount: 2, unit: 'days', label: '2 days before' }
 ];
 
-export default function EventEditModal({ event, isOpen, onClose, onSave, onDelete, onDuplicate, isSaving, t = (k) => k }) {
+export default function EventEditModal({ event, isOpen, onClose, onSave, onDelete, onDuplicate, isSaving, t = (k) => k, customCategories = [] }) {
   const missingFields = event?._missingFields || [];
   const isCompletionMode = missingFields.length > 0;
   
@@ -48,42 +48,25 @@ export default function EventEditModal({ event, isOpen, onClose, onSave, onDelet
     reminder_amount: null,
     reminder_unit: null
   });
-  const [customCategory, setCustomCategory] = useState('');
-  const [useCustomCategory, setUseCustomCategory] = useState(false);
-
   useEffect(() => {
     if (event) {
-      const isCustom = event.category && !defaultCategories.find(c => c.value === event.category);
       setFormData({
         title: event.title || '',
         description: event.description || '',
         date: event.date || '',
         start_time: event.start_time || '',
         end_time: event.end_time || '',
-        category: isCustom ? 'custom' : (event.category || 'other'),
+        category: event.category || 'other',
         location: event.location || '',
         is_all_day: event.is_all_day || false,
         reminder_amount: event.reminder_amount || null,
         reminder_unit: event.reminder_unit || null
       });
-      if (isCustom) {
-        setCustomCategory(event.category);
-        setUseCustomCategory(true);
-      } else {
-        setCustomCategory('');
-        setUseCustomCategory(false);
-      }
     }
   }, [event]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (field === 'category' && value === 'custom') {
-      setUseCustomCategory(true);
-    } else if (field === 'category') {
-      setUseCustomCategory(false);
-      setCustomCategory('');
-    }
   };
 
   const handleReminderChange = (value) => {
@@ -99,13 +82,11 @@ export default function EventEditModal({ event, isOpen, onClose, onSave, onDelet
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const finalCategory = useCustomCategory && customCategory ? customCategory : formData.category;
-    onSave({ ...event, ...formData, category: finalCategory });
+    onSave({ ...event, ...formData });
   };
 
   const handleDuplicate = () => {
-    const finalCategory = useCustomCategory && customCategory ? customCategory : formData.category;
-    onDuplicate({ ...event, ...formData, category: finalCategory });
+    onDuplicate({ ...event, ...formData });
   };
 
   const currentReminderValue = formData.reminder_amount && formData.reminder_unit 
@@ -193,23 +174,13 @@ export default function EventEditModal({ event, isOpen, onClose, onSave, onDelet
                   {defaultCategories.map(cat => (
                     <SelectItem key={cat.value} value={cat.value}>{t(cat.value) || cat.label}</SelectItem>
                   ))}
-                  <SelectItem value="custom">{t('customCategory')}</SelectItem>
+                  {customCategories.map(cat => (
+                    <SelectItem key={cat.slug} value={cat.slug}>{cat.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-
-          {useCustomCategory && (
-            <div className="space-y-2">
-              <Label htmlFor="customCategory">{t('customCategory')}</Label>
-              <Input
-                id="customCategory"
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                placeholder={t('customCategory')}
-              />
-            </div>
-          )}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">

@@ -22,21 +22,21 @@ export default function SearchEvents({ events, onSelectEvent, t = (k) => k, cate
   }, [query, events]);
 
   return (
-    <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+    <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Search className="w-5 h-5 text-gray-400" />
+          <Search className="w-5 h-5 text-amber-400 dark:text-gray-400" />
           {t('searchEvents')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-400 dark:text-gray-400" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="pl-10 rounded-xl"
+            className="pl-10 rounded-xl border-amber-100 dark:border-gray-600 focus:border-amber-300 focus:ring-amber-300 dark:focus:border-gray-500"
           />
         </div>
 

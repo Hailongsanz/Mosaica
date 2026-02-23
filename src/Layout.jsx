@@ -33,6 +33,16 @@ export default function Layout({ children, currentPageName }) {
   const theme = settings?.theme || 'light';
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
+  // Apply .dark to <html> so Radix UI portals (Popover, Select, Dialog, etc.)
+  // rendered at document.body level also receive dark: Tailwind variants
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDark]);
+
   return (
     <AuthWrapper>
       <div className={isDark ? 'dark' : ''}>
@@ -42,6 +52,8 @@ export default function Layout({ children, currentPageName }) {
             --foreground: ${isDark ? '0 0% 95%' : '20 14.3% 4.1%'};
             --card: ${isDark ? '20 14.3% 4.1%' : '0 0% 100%'};
             --card-foreground: ${isDark ? '0 0% 95%' : '20 14.3% 4.1%'};
+            --popover: ${isDark ? '20 14.3% 8%' : '0 0% 100%'};
+            --popover-foreground: ${isDark ? '0 0% 95%' : '20 14.3% 4.1%'};
             --primary: ${isDark ? '0 0% 98%' : '24 9.8% 10%'};
             --primary-foreground: ${isDark ? '20 14.3% 4.1%' : '0 0% 98%'};
             --secondary: ${isDark ? '20 14.3% 14.1%' : '60 4.8% 95.9%'};
@@ -52,6 +64,7 @@ export default function Layout({ children, currentPageName }) {
             --accent-foreground: ${isDark ? '0 0% 98%' : '24 9.8% 10%'};
             --border: ${isDark ? '20 14.3% 14.1%' : '20 5.9% 90%'};
             --input: ${isDark ? '20 14.3% 14.1%' : '20 5.9% 90%'};
+            --ring: ${isDark ? '20 14.3% 60%' : '20 14.3% 4.1%'};
           }
           
           .dark {
@@ -118,6 +131,26 @@ export default function Layout({ children, currentPageName }) {
           .dark input::placeholder,
           .dark textarea::placeholder {
             color: #666 !important;
+          }
+          
+          .amber-scroll::-webkit-scrollbar {
+            width: 4px;
+          }
+          .amber-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .amber-scroll::-webkit-scrollbar-thumb {
+            background-color: #fde68a;
+            border-radius: 9999px;
+          }
+          .amber-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: #fbbf24;
+          }
+          .dark .amber-scroll::-webkit-scrollbar-thumb {
+            background-color: #374151;
+          }
+          .dark .amber-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: #4b5563;
           }
         `}</style>
         {children}

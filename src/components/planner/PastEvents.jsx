@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { format, isBefore, startOfDay, parse } from 'date-fns';
+import { getDateLocale } from '@/lib/dateLocale';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Clock, MapPin, CheckCircle, XCircle, ChevronDown, ChevronUp, Save, Loader2, Trash2, Pencil } from "lucide-react";
 import { getCardStyle, getBadgeStyle } from '@/lib/categoryColors';
 
-function PastEventItem({ event, onMarkComplete, onMarkMissed, onSaveNotes, onDelete, onEditEvent, isSaving, userColors, t }) {
+function PastEventItem({ event, onMarkComplete, onMarkMissed, onSaveNotes, onDelete, onEditEvent, isSaving, userColors, t, language = 'en' }) {
   const [expanded, setExpanded] = useState(false);
   const [notes, setNotes] = useState(event.notes || '');
 
@@ -41,7 +42,7 @@ function PastEventItem({ event, onMarkComplete, onMarkMissed, onSaveNotes, onDel
               )}
             </div>
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-              <span>{format(parse(event.date, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy')}</span>
+              <span>{format(parse(event.date, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy', { locale: getDateLocale(language) })}</span>
               {event.start_time && (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
@@ -139,7 +140,7 @@ function PastEventItem({ event, onMarkComplete, onMarkMissed, onSaveNotes, onDel
   );
 }
 
-export default function PastEvents({ events, onMarkComplete, onMarkMissed, onSaveNotes, onDelete, onEditEvent, isSaving, t = (k) => k, categoryColors: userColors }) {
+export default function PastEvents({ events, onMarkComplete, onMarkMissed, onSaveNotes, onDelete, onEditEvent, isSaving, t = (k) => k, categoryColors: userColors, language = 'en' }) {
   const today = startOfDay(new Date());
   
   const pastEvents = events
@@ -150,7 +151,7 @@ export default function PastEvents({ events, onMarkComplete, onMarkMissed, onSav
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+      <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center justify-between">
             <span>{t('pastEvents')}</span>
@@ -182,6 +183,7 @@ export default function PastEvents({ events, onMarkComplete, onMarkMissed, onSav
                 isSaving={isSaving}
                 userColors={userColors}
                 t={t}
+                language={language}
               />
             ))
           )}

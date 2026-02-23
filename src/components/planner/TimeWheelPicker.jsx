@@ -105,7 +105,7 @@ function WheelColumn({ items, value, onChange, label, width = 'w-14' }) {
                   "flex items-center justify-center cursor-pointer select-none transition-colors duration-100",
                   isSelected
                     ? "text-foreground font-semibold text-[17px]"
-                    : "text-muted-foreground/60 text-sm hover:text-muted-foreground"
+                    : "text-muted-foreground text-sm hover:text-foreground"
                 )}
                 style={{ height: ITEM_HEIGHT }}
                 onClick={() => handleItemClick(item, index)}

@@ -1,12 +1,13 @@
 import React from 'react';
 import { format } from 'date-fns';
+import { getDateLocale } from '@/lib/dateLocale';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Trash2, Pencil, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCardStyle, getBadgeStyle } from '@/lib/categoryColors';
 
-export default function DaySchedule({ date, events, onDeleteEvent, onEditEvent, t = (k) => k, categoryColors: userColors }) {
+export default function DaySchedule({ date, events, onDeleteEvent, onEditEvent, t = (k) => k, categoryColors: userColors, language = 'en' }) {
   const sortedEvents = [...events].sort((a, b) => {
     if (a.is_all_day && !b.is_all_day) return -1;
     if (!a.is_all_day && b.is_all_day) return 1;
@@ -17,10 +18,10 @@ export default function DaySchedule({ date, events, onDeleteEvent, onEditEvent, 
   });
 
   return (
-    <Card className="bg-white dark:bg-[#2a2a2e] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+    <Card className="bg-white dark:bg-[#2a2a2e] rounded-2xl shadow-sm border border-amber-100 dark:border-gray-700">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-          {format(date, 'EEEE, MMMM d')}
+          {format(date, 'EEEE, MMMM d', { locale: getDateLocale(language) })}
         </CardTitle>
         <p className="text-sm text-gray-500">
           {events.length === 0 ? t('noEventsScheduled') : `${events.length} ${events.length > 1 ? t('events') : t('event')}`}

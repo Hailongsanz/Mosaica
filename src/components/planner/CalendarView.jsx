@@ -3,8 +3,9 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getDotStyle } from '@/lib/categoryColors';
+import { getDateLocale } from '@/lib/dateLocale';
 
-export default function CalendarView({ events, selectedDate, onSelectDate, t = (k) => k, categoryColors: userColors }) {
+export default function CalendarView({ events, selectedDate, onSelectDate, t = (k) => k, categoryColors: userColors, language = 'en' }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);
@@ -18,11 +19,11 @@ export default function CalendarView({ events, selectedDate, onSelectDate, t = (
   };
 
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-sm border border-amber-100 dark:border-gray-700 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {format(currentMonth, 'MMMM yyyy')}
+          {format(currentMonth, 'MMMM yyyy', { locale: getDateLocale(language) })}
         </h2>
         <div className="flex items-center gap-1">
           <Button
@@ -55,7 +56,7 @@ export default function CalendarView({ events, selectedDate, onSelectDate, t = (
       {/* Weekday headers */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {[t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat')].map(day => (
-          <div key={day} className="text-center text-xs font-medium text-gray-400 dark:text-gray-300 py-2">
+          <div key={day} className="text-center text-xs font-medium text-amber-400 dark:text-gray-300 py-2">
             {day}
           </div>
         ))}
@@ -74,11 +75,11 @@ export default function CalendarView({ events, selectedDate, onSelectDate, t = (
               key={idx}
               onClick={() => onSelectDate(day)}
               className={`
-                aspect-square p-1 rounded-xl flex flex-col items-center justify-start
+                h-10 w-full p-1 rounded-xl flex flex-col items-center justify-center
                 transition-all duration-150 relative
-                ${isSelected ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'}
+                ${isSelected ? 'bg-amber-500 dark:bg-white text-white dark:text-gray-900' : 'hover:bg-amber-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'}
                 ${!isCurrentMonth && !isSelected ? 'text-gray-300 dark:text-gray-600' : ''}
-                ${isToday && !isSelected ? 'ring-1 ring-gray-900 dark:ring-white ring-offset-1 dark:ring-offset-[#1a1a1a]' : ''}
+                ${isToday && !isSelected ? 'ring-1 ring-amber-400 dark:ring-white ring-offset-1 dark:ring-offset-[#1a1a1a]' : ''}
               `}
             >
               <span className={`text-sm font-medium ${isSelected ? 'text-white dark:text-gray-900' : ''}`}>

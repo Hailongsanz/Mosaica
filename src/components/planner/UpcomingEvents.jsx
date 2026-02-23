@@ -1,5 +1,6 @@
 import React from 'react';
 import { format, isToday, isTomorrow, isAfter, startOfDay, addDays, parse } from 'date-fns';
+import { getDateLocale } from '@/lib/dateLocale';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ function EventItem({ event, onEditEvent, onDeleteEvent, userColors }) {
   return (
     <div className="group flex items-start gap-3 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
       <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
-        <Calendar className="w-4 h-4 text-gray-500" />
+        <Calendar className="w-4 h-4 text-amber-400 dark:text-gray-500" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -81,7 +82,8 @@ function DaySection({ title, subtitle, events, onEditEvent, onDeleteEvent, userC
   );
 }
 
-export default function UpcomingEvents({ events, onEditEvent, onDeleteEvent, t = (k) => k, categoryColors: userColors }) {
+export default function UpcomingEvents({ events, onEditEvent, onDeleteEvent, t = (k) => k, categoryColors: userColors, language = 'en' }) {
+  const locale = getDateLocale(language);
   const today = startOfDay(new Date());
   
   // Filter and sort upcoming events (today and future)
@@ -122,14 +124,14 @@ export default function UpcomingEvents({ events, onEditEvent, onDeleteEvent, t =
   const sortedDateKeys = Object.keys(groupedLaterEvents).sort();
 
   return (
-    <Card className="bg-white dark:bg-[#2a2a2e] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+    <Card className="bg-white dark:bg-[#2a2a2e] rounded-2xl shadow-sm border border-amber-100 dark:border-gray-700">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-gray-400" />
+          <Calendar className="w-5 h-5 text-amber-400 dark:text-gray-400" />
           {t('upcomingEvents')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5 max-h-[500px] overflow-y-auto">
+      <CardContent className="space-y-5 max-h-[500px] overflow-y-auto amber-scroll">
         {upcomingEvents.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-4">
             {t('noUpcomingEvents')}
@@ -138,7 +140,7 @@ export default function UpcomingEvents({ events, onEditEvent, onDeleteEvent, t =
           <>
             <DaySection 
               title={t('today')} 
-              subtitle={format(today, 'MMM d')}
+              subtitle={format(today, 'MMM d', { locale })}
               events={todayEvents}
               onEditEvent={onEditEvent}
               onDeleteEvent={onDeleteEvent}
@@ -147,7 +149,7 @@ export default function UpcomingEvents({ events, onEditEvent, onDeleteEvent, t =
             
             <DaySection 
               title={t('tomorrow')} 
-              subtitle={format(addDays(today, 1), 'MMM d')}
+              subtitle={format(addDays(today, 1), 'MMM d', { locale })}
               events={tomorrowEvents}
               onEditEvent={onEditEvent}
               onDeleteEvent={onDeleteEvent}
@@ -157,8 +159,8 @@ export default function UpcomingEvents({ events, onEditEvent, onDeleteEvent, t =
             {sortedDateKeys.map(dateKey => (
               <DaySection
                 key={dateKey}
-                title={format(new Date(dateKey), 'EEEE')}
-                subtitle={format(new Date(dateKey), 'MMM d')}
+                title={format(new Date(dateKey), 'EEEE', { locale })}
+                subtitle={format(new Date(dateKey), 'MMM d', { locale })}
                 events={groupedLaterEvents[dateKey]}
                 onEditEvent={onEditEvent}
                 onDeleteEvent={onDeleteEvent}

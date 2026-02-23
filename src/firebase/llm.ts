@@ -128,6 +128,11 @@ async function invokeAI(options: LLMOptions): Promise<any> {
       max_tokens: maxTokens,
     };
 
+    // Tell the model to output JSON only — Groq and OpenAI both support this
+    if (response_json_schema) {
+      payload.response_format = { type: 'json_object' };
+    }
+
     const json = await proxyLLM(provider, '/chat/completions', payload);
     const content = json?.choices?.[0]?.message?.content ?? json?.choices?.[0]?.message ?? null;
 
@@ -135,20 +140,28 @@ async function invokeAI(options: LLMOptions): Promise<any> {
 
     if (response_json_schema) {
       try {
-        // Strip markdown code fences if present (Groq often wraps JSON in ```json...```)
+        // Strip markdown code fences if present
         let cleanedContent = content.trim();
         if (cleanedContent.startsWith('```')) {
-          // Remove opening fence (```json or ```)
           cleanedContent = cleanedContent.replace(/^```(?:json)?\n?/, '');
-          // Remove closing fence
           cleanedContent = cleanedContent.replace(/\n?```$/, '');
           cleanedContent = cleanedContent.trim();
+        }
+
+        // If there's preamble text before the JSON object, find the first { and parse from there
+        if (!cleanedContent.startsWith('{') && !cleanedContent.startsWith('[')) {
+          const jsonStart = cleanedContent.indexOf('{');
+          if (jsonStart !== -1) {
+            cleanedContent = cleanedContent.slice(jsonStart);
+          }
         }
         
         return JSON.parse(cleanedContent);
       } catch (parseError) {
         console.error('LLM JSON parse error:', parseError, 'content:', content);
-        return { message: content };
+        // Last resort: return the text as the message without the raw JSON blob
+        const preamble = content.split(/\{[\s\S]*\}/)?.[0]?.trim();
+        return { message: preamble || content };
       }
     }
 

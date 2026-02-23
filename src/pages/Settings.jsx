@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   User, Moon, Sun, Globe, Clock, Calendar, Bell, 
-  LogOut, ChevronLeft, Loader2, Check, Palette, Upload, Sparkles, RotateCcw
+  LogOut, ChevronLeft, Loader2, Check, Palette, Upload, Sparkles, RotateCcw, Tag, Plus, X
 } from "lucide-react";
 import { DEFAULT_CATEGORY_COLORS } from '@/lib/categoryColors';
 
@@ -135,6 +135,8 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState('#8b5cf6');
   const queryClient = useQueryClient();
 
   // Debug: Log user object changes
@@ -196,6 +198,23 @@ export default function Settings() {
     }
   };
 
+  const customCategories = settings?.custom_categories || [];
+
+  const handleAddCustomCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/\s+/g, '_');
+    const updated = [...customCategories, { name, slug, color: newCatColor }];
+    setNewCatName('');
+    setNewCatColor('#8b5cf6');
+    await handleSettingChange('custom_categories', updated);
+  };
+
+  const handleDeleteCustomCategory = async (slug) => {
+    const updated = customCategories.filter(c => c.slug !== slug);
+    await handleSettingChange('custom_categories', updated);
+  };
+
   const handleLogout = async () => {
     await logout();
   };
@@ -255,7 +274,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/40 via-white to-amber-50/20">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -287,10 +306,10 @@ export default function Settings() {
 
         <div className="space-y-6">
           {/* Account Section */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="w-5 h-5 text-gray-400" />
+                <User className="w-5 h-5 text-amber-400 dark:text-gray-400" />
                 {t('account')}
               </CardTitle>
               <CardDescription>{t('yourAccountInfo')}</CardDescription>
@@ -349,10 +368,10 @@ export default function Settings() {
           </Card>
 
           {/* Appearance */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Palette className="w-5 h-5 text-gray-400" />
+                <Palette className="w-5 h-5 text-amber-400 dark:text-gray-400" />
                 {t('appearance')}
               </CardTitle>
               <CardDescription>{t('customizeAppearance')}</CardDescription>
@@ -361,9 +380,9 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {settings?.theme === 'dark' ? (
-                    <Moon className="w-5 h-5 text-gray-500" />
+                    <Moon className="w-5 h-5 text-amber-400 dark:text-gray-500" />
                   ) : (
-                    <Sun className="w-5 h-5 text-gray-500" />
+                    <Sun className="w-5 h-5 text-amber-400 dark:text-gray-500" />
                   )}
                   <div>
                     <Label className="text-base">{t('theme')}</Label>
@@ -389,7 +408,7 @@ export default function Settings() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-gray-500" />
+                  <Globe className="w-5 h-5 text-amber-400 dark:text-gray-500" />
                   <div>
                     <Label className="text-base">{t('language')}</Label>
                     <p className="text-sm text-gray-500">{t('selectLanguage')}</p>
@@ -417,10 +436,10 @@ export default function Settings() {
           </Card>
 
           {/* Subscription & Usage */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Sparkles className="w-5 h-5 text-gray-400" />
+                <Sparkles className="w-5 h-5 text-amber-400 dark:text-gray-400" />
                 {t('subscriptionUsage')}
               </CardTitle>
               <CardDescription>{t('managePlanUsage')}</CardDescription>
@@ -477,10 +496,10 @@ export default function Settings() {
           </Card>
 
           {/* Calendar Preferences */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="w-5 h-5 text-gray-400" />
+                <Calendar className="w-5 h-5 text-amber-400 dark:text-gray-400" />
                 {t('calendarPreferences')}
               </CardTitle>
               <CardDescription>{t('customizeCalendar')}</CardDescription>
@@ -488,7 +507,7 @@ export default function Settings() {
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-gray-500" />
+                  <Clock className="w-5 h-5 text-amber-400 dark:text-gray-500" />
                   <div>
                     <Label className="text-base">{t('timeFormat')}</Label>
                     <p className="text-sm text-gray-500">{t('hourFormat12or24')}</p>
@@ -580,12 +599,12 @@ export default function Settings() {
           </Card>
 
           {/* Category Colors */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Palette className="w-5 h-5 text-gray-400" />
+                    <Palette className="w-5 h-5 text-amber-400 dark:text-gray-400" />
                     {t('categoryColors')}
                   </CardTitle>
                   <CardDescription>{t('customizeCategoryColors')}</CardDescription>
@@ -637,11 +656,80 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          {/* Notifications */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          {/* Custom Categories */}
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Bell className="w-5 h-5 text-gray-400" />
+                <Tag className="w-5 h-5 text-amber-400 dark:text-gray-400" />
+                Custom Categories
+              </CardTitle>
+              <CardDescription>Create your own event categories with custom colors.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Existing custom categories */}
+              {customCategories.length > 0 && (
+                <div className="space-y-2">
+                  {customCategories.map((cat) => (
+                    <div key={cat.slug} className="flex items-center justify-between p-3 rounded-xl bg-amber-50/50 dark:bg-gray-800/50 border border-amber-100 dark:border-gray-700">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full border border-gray-200 dark:border-gray-600 shadow-sm" style={{ backgroundColor: cat.color }} />
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{cat.name}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                        onClick={() => handleDeleteCustomCategory(cat.slug)}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new category */}
+              <div className="flex items-center gap-2 pt-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="w-9 h-9 rounded-xl border-2 border-amber-100 dark:border-gray-600 cursor-pointer shadow-sm hover:scale-105 transition-transform shrink-0"
+                      style={{ backgroundColor: newCatColor }}
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 rounded-2xl p-4" align="start">
+                    <ColorSliderPicker
+                      value={newCatColor}
+                      label="New category color"
+                      onChange={setNewCatColor}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCustomCategory()}
+                  placeholder="Category name…"
+                  className="flex-1 h-9 px-3 text-sm rounded-xl border border-amber-100 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-amber-300 focus:ring-1 focus:ring-amber-300"
+                />
+                <Button
+                  onClick={handleAddCustomCategory}
+                  disabled={!newCatName.trim()}
+                  size="icon"
+                  className="h-9 w-9 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notifications */}
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Bell className="w-5 h-5 text-amber-400 dark:text-gray-400" />
                 {t('notifications')}
               </CardTitle>
               <CardDescription>{t('manageNotifications')}</CardDescription>
@@ -661,7 +749,7 @@ export default function Settings() {
           </Card>
 
           {/* Disclaimers & Legal Notice */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="text-lg">{t('disclaimersLegal')}</CardTitle>
             </CardHeader>
@@ -682,7 +770,7 @@ export default function Settings() {
           </Card>
 
           {/* Sign Out */}
-          <Card className="rounded-2xl border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
+          <Card className="rounded-2xl border-amber-100 dark:border-gray-700 shadow-sm bg-white dark:bg-[#2a2a2e]">
             <CardContent className="pt-6">
               <Button 
                 variant="outline" 
