@@ -1,6 +1,6 @@
 # Mosaica - AI-Powered Personal Planner
 
-An intelligent calendar and event planning app powered by Firebase and OpenAI. Plan your life in natural language.
+An intelligent calendar and event planning app powered by Firebase, OpenAI, Groq, and Anthropic. Plan your life in natural language.
 
 ## 🚀 Quick Start
 
