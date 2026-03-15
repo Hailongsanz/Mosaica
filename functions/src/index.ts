@@ -1,30 +1,37 @@
 /**
  * Mosaica Cloud Functions
- * 
+ *
  * AI request handler with quota enforcement based on subscription tiers:
  * - Free: 3 planner/month, 0 courage (locked)
  * - Mid ($3.99): unlimited planner*, 10 courage/month
  * - Top ($4.99): unlimited planner*, unlimited courage*
- * 
+ *
  * *Soft cap at 1000/month to prevent abuse
  */
 
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import Groq from 'groq-sdk';
+import Stripe from 'stripe';
 
 admin.initializeApp();
 const firestore = admin.firestore();
 
 // Subscription tier limits
 const QUOTAS = {
-  free: { planner: 3, courage: 0 },
-  mid: { planner: 1000, courage: 10 },  // 1000 = abuse prevention
-  top: { planner: 1000, courage: 1000 },
+  free: { planner: 20, courage: 0 },
+  mid: { planner: 10000, courage: 10 },   // effectively unlimited
+  top: { planner: 10000, courage: 10000 }, // effectively unlimited
 };
 
 // Default AI model for Groq (free tier)
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+
+// Stripe helper — initialized lazily using functions config
+function getStripe(): Stripe {
+  const key = functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY || '';
+  return new Stripe(key, { apiVersion: '2026-02-25.clover' });
+}
 
 interface AIRequestData {
   prompt: string;
@@ -84,7 +91,7 @@ export const callAI = functions.https.onCall(async (data: AIRequestData, context
   try {
     // 2. Get user settings and subscription tier
     const userDoc = await firestore.collection('userSettings').doc(uid).get();
-    
+
     if (!userDoc.exists) {
       throw new functions.https.HttpsError(
         'not-found',
@@ -103,7 +110,7 @@ export const callAI = functions.https.onCall(async (data: AIRequestData, context
     // 3. Check if usage needs monthly reset
     const now = new Date();
     const resetDate = new Date(usage.reset_date);
-    
+
     if (now >= resetDate) {
       // Reset usage counters for new month
       usage = {
@@ -111,7 +118,7 @@ export const callAI = functions.https.onCall(async (data: AIRequestData, context
         courage_uses: 0,
         reset_date: getNextMonthStart(),
       };
-      
+
       await firestore.collection('userSettings').doc(uid).update({
         usage,
         last_reset: admin.firestore.FieldValue.serverTimestamp(),
@@ -151,10 +158,10 @@ export const callAI = functions.https.onCall(async (data: AIRequestData, context
 
     // 5. Call AI provider (currently Groq, can add OpenAI later)
     let aiResponse;
-    
+
     if (provider === 'groq') {
       const groqApiKey = functions.config().groq?.api_key || process.env.GROQ_API_KEY;
-      
+
       if (!groqApiKey) {
         throw new functions.https.HttpsError(
           'failed-precondition',
@@ -203,7 +210,7 @@ export const callAI = functions.https.onCall(async (data: AIRequestData, context
             cleanedContent = cleanedContent.replace(/\n?```$/, '');
             cleanedContent = cleanedContent.trim();
           }
-          
+
           aiResponse = JSON.parse(cleanedContent);
         } catch (parseError) {
           console.error('JSON parse error:', parseError, 'content:', content);
@@ -237,12 +244,12 @@ export const callAI = functions.https.onCall(async (data: AIRequestData, context
     };
   } catch (error: any) {
     console.error('callAI error:', error);
-    
+
     // Re-throw HttpsErrors
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
-    
+
     // Wrap unknown errors
     throw new functions.https.HttpsError(
       'internal',
@@ -266,40 +273,186 @@ function getNextMonthStart(): string {
 }
 
 /**
+ * Create a Stripe Checkout Session for subscription upgrade
+ * Returns the hosted checkout URL to redirect the user to
+ */
+export const createCheckoutSession = functions.https.onCall(async (
+  data: { priceId: string; tier: 'mid' | 'top' },
+  context
+) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const uid = context.auth.uid;
+  const { priceId } = data;
+
+  if (!priceId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing priceId.');
+  }
+
+  try {
+    const stripe = getStripe();
+    const appUrl = functions.config().app?.url || 'http://localhost:5173';
+
+    // Get or create Stripe customer
+    const userDoc = await firestore.collection('userSettings').doc(uid).get();
+    const userData = userDoc.data();
+    let customerId: string = userData?.stripe_customer_id || '';
+
+    if (!customerId) {
+      // Look up user email from Firebase Auth
+      const authUser = await admin.auth().getUser(uid);
+      const customer = await stripe.customers.create({
+        email: authUser.email,
+        metadata: { uid },
+      });
+      customerId = customer.id;
+      // Store the customer ID immediately
+      await firestore.collection('userSettings').doc(uid).update({
+        stripe_customer_id: customerId,
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/settings?upgrade=success`,
+      cancel_url: `${appUrl}/settings`,
+      allow_promotion_codes: true,
+    });
+
+    return { url: session.url };
+  } catch (error: any) {
+    console.error('createCheckoutSession error:', error);
+    throw new functions.https.HttpsError('internal', `Checkout failed: ${error.message}`);
+  }
+});
+
+/**
+ * Create a Stripe Customer Portal session for subscription management
+ * (cancel, upgrade/downgrade, update payment method)
+ */
+export const createPortalSession = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const uid = context.auth.uid;
+
+  try {
+    const stripe = getStripe();
+    const appUrl = functions.config().app?.url || 'http://localhost:5173';
+
+    const userDoc = await firestore.collection('userSettings').doc(uid).get();
+    const customerId: string = userDoc.data()?.stripe_customer_id || '';
+
+    if (!customerId) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'No subscription found. Please subscribe first.'
+      );
+    }
+
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${appUrl}/settings`,
+    });
+
+    return { url: portalSession.url };
+  } catch (error: any) {
+    console.error('createPortalSession error:', error);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError('internal', `Portal failed: ${error.message}`);
+  }
+});
+
+/**
  * Webhook handler for Stripe subscription events
- * Called when user purchases/cancels subscription
+ * Called by Stripe when a user subscribes, upgrades, downgrades, or cancels
+ *
+ * Required Firebase Functions config:
+ *   stripe.webhook_secret  — from Stripe Dashboard > Webhooks
  */
 export const stripeWebhook = functions.https.onRequest(async (req, res) => {
-  // TODO: Implement Stripe webhook verification
-  // This will update user's subscription_tier when they purchase
-  
-  const event = req.body;
-  
-  // Example: customer.subscription.created
-  if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
-    const subscription = event.data.object;
-    // const customerId = subscription.customer;
-    const priceId = subscription.items.data[0].price.id;
-    
-    // Map Stripe price IDs to subscription tiers
-    // You'll get these from Stripe dashboard after creating products
-    const tierMapping: Record<string, string> = {
-      'price_mid_tier_id': 'mid',
-      'price_top_tier_id': 'top',
-    };
-    
-    // const tier = tierMapping[priceId] || 'free';
-    console.log('Stripe webhook received:', event.type, 'priceId:', priceId, 'tierMapping:', tierMapping);
-    
-    // TODO: Update user's subscription tier in Firestore
-    // (You'll need to store customerId → uid mapping)
-    // await firestore.collection('userSettings').doc(uid).update({
-    //   subscription_tier: tier,
-    //   stripe_customer_id: customerId,
-    //   subscription_status: subscription.status,
-    //   updated_at: admin.firestore.FieldValue.serverTimestamp(),
-    // });
+  const stripe = getStripe();
+  const webhookSecret = functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET || '';
+  const sig = req.headers['stripe-signature'] as string;
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
   }
-  
+
+  const midPriceId = functions.config().stripe?.mid_price_id || '';
+  const topPriceId = functions.config().stripe?.top_price_id || '';
+  const tierMapping: Record<string, string> = {
+    [midPriceId]: 'mid',
+    [topPriceId]: 'top',
+  };
+
+  try {
+    if (
+      event.type === 'customer.subscription.created' ||
+      event.type === 'customer.subscription.updated'
+    ) {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+      const priceId = subscription.items.data[0]?.price?.id || '';
+      const tier = tierMapping[priceId] || 'free';
+
+      const uid = await getUidFromCustomerId(stripe, customerId);
+      if (uid) {
+        await firestore.collection('userSettings').doc(uid).update({
+          subscription_tier: tier,
+          stripe_customer_id: customerId,
+          subscription_status: subscription.status,
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        console.log(`Updated ${uid} to tier "${tier}" (status: ${subscription.status})`);
+      }
+    }
+
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      const uid = await getUidFromCustomerId(stripe, customerId);
+      if (uid) {
+        await firestore.collection('userSettings').doc(uid).update({
+          subscription_tier: 'free',
+          subscription_status: 'canceled',
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        console.log(`Downgraded ${uid} to free tier (subscription canceled)`);
+      }
+    }
+  } catch (err: any) {
+    console.error('Webhook handler error:', err.message);
+    res.status(500).send('Internal error');
+    return;
+  }
+
   res.json({ received: true });
 });
+
+/**
+ * Look up a Firebase UID from a Stripe customer ID
+ * Uses the uid stored in customer metadata at creation time
+ */
+async function getUidFromCustomerId(stripe: Stripe, customerId: string): Promise<string | null> {
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if (customer.deleted) return null;
+    return (customer as Stripe.Customer).metadata?.uid || null;
+  } catch (err) {
+    console.error('getUidFromCustomerId error:', err);
+    return null;
+  }
+}

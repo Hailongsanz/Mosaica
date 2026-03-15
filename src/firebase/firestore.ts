@@ -63,6 +63,7 @@ export interface UserSettings {
   };
   stripe_customer_id?: string;
   subscription_status?: string;
+  onboarding_complete?: boolean;
   last_reset?: string;
   last_ai_request?: string;
   personalizations?: Array<{

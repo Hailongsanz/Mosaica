@@ -52,7 +52,8 @@ export const signInWithGoogle = async () => {
   const userDoc = doc(db, 'users', result.user.uid);
   const docSnap = await getDoc(userDoc);
   
-  if (!docSnap.exists()) {
+  const isNewUser = !docSnap.exists();
+  if (isNewUser) {
     await setDoc(userDoc, {
       email: result.user.email,
       full_name: result.user.displayName || '',
@@ -60,8 +61,8 @@ export const signInWithGoogle = async () => {
       profile_picture: result.user.photoURL || null,
     });
   }
-  
-  return result.user;
+
+  return { user: result.user, isNewUser };
 };
 
 // Sign out

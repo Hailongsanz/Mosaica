@@ -71,10 +71,11 @@ export default function Auth() {
           .filter(Boolean)
           .join(' ');
         await signUp(formData.email, formData.password, fullName);
+        navigate('/onboarding');
       } else {
         await signIn(formData.email, formData.password);
+        navigate('/');
       }
-      navigate('/');
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -87,8 +88,8 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      await signInWithGoogle();
-      navigate('/');
+      const { isNewUser } = await signInWithGoogle();
+      navigate(isNewUser ? '/onboarding' : '/');
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

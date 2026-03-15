@@ -124,6 +124,70 @@ export default function Landing() {
           </div>
         </div>
 
+        {/* Pricing */}
+        <div className="py-20 border-t border-amber-100">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Simple pricing</h2>
+            <p className="text-gray-500">Start free, upgrade when you're ready.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {/* Free */}
+            <div className="rounded-2xl border border-amber-100 bg-white p-6 flex flex-col gap-4 shadow-sm">
+              <div>
+                <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">Free</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">$0</p>
+              </div>
+              <ul className="text-sm text-gray-500 space-y-2 flex-1">
+                <li className="flex items-center gap-2"><span className="text-amber-500">✓</span> 20 AI Planner requests/mo</li>
+                <li className="flex items-center gap-2"><span className="text-gray-300">✗</span> Courage Chat locked</li>
+              </ul>
+              <button
+                onClick={handleGetStarted}
+                className="w-full rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 h-10 text-sm font-medium transition-colors"
+              >
+                Get started free
+              </button>
+            </div>
+            {/* Mid — highlighted */}
+            <div className="rounded-2xl border-2 border-amber-400 bg-white p-6 flex flex-col gap-4 shadow-md relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full">Most popular</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">Plus</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">$3.99<span className="text-base font-normal text-gray-400">/mo</span></p>
+              </div>
+              <ul className="text-sm text-gray-500 space-y-2 flex-1">
+                <li className="flex items-center gap-2"><span className="text-amber-500">✓</span> Unlimited AI Planner</li>
+                <li className="flex items-center gap-2"><span className="text-amber-500">✓</span> 10 Courage chats/mo</li>
+              </ul>
+              <button
+                onClick={handleGetStarted}
+                className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white h-10 text-sm font-medium transition-colors shadow-sm"
+              >
+                Get started
+              </button>
+            </div>
+            {/* Top */}
+            <div className="rounded-2xl border border-amber-100 bg-white p-6 flex flex-col gap-4 shadow-sm">
+              <div>
+                <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">Pro</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">$4.99<span className="text-base font-normal text-gray-400">/mo</span></p>
+              </div>
+              <ul className="text-sm text-gray-500 space-y-2 flex-1">
+                <li className="flex items-center gap-2"><span className="text-amber-500">✓</span> Unlimited AI Planner</li>
+                <li className="flex items-center gap-2"><span className="text-amber-500">✓</span> Unlimited Courage Chat</li>
+              </ul>
+              <button
+                onClick={handleGetStarted}
+                className="w-full rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 h-10 text-sm font-medium transition-colors"
+              >
+                Get started
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* CTA */}
         <div className="py-20 text-center border-t border-amber-100">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900">Ready to get organized?</h2>

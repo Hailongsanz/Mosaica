@@ -93,13 +93,16 @@ function ColorSliderPicker({ value, onChange, label }) {
     </div>
   );
 }
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { getTranslation } from '@/components/planner/translations';
 import { useAuth } from '@/lib/AuthContext';
 import { userSettingsService } from '@/firebase/firestore';
 import { cloudinaryService } from '@/api/cloudinary';
 import { updateUserProfile } from '@/firebase/auth';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import app from '@/firebase/config';
+import { useToast } from '@/components/ui/use-toast';
 
 const languages = [
   { code: 'en', name: 'English' },
@@ -124,22 +127,68 @@ const categories = [
 ];
 
 const subscriptionTiers = {
-  free: { name: 'Free', price: '$0', planner: 3, courage: 0 },
-  mid: { name: 'Mid Tier', price: '$3.99/mo', planner: 'Unlimited', courage: 10 },
-  top: { name: 'Top Tier', price: '$4.99/mo', planner: 'Unlimited', courage: 'Unlimited' }
+  free: { name: 'Free', price: '$0', planner: 20, courage: 0 },
+  mid: { name: 'Plus', price: '$3.99/mo', planner: 'Unlimited', courage: 10 },
+  top: { name: 'Pro', price: '$4.99/mo', planner: 'Unlimited', courage: 'Unlimited' }
 };
 
 export default function Settings() {
   const { user, logout, checkAppState, refreshUser, updateUserField } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#8b5cf6');
+  const [checkoutLoading, setCheckoutLoading] = useState(null);
   const queryClient = useQueryClient();
 
-  // Debug: Log user object changes
+  // Stripe checkout: redirect to Stripe Hosted Checkout
+  const handleUpgrade = async (priceId, tier) => {
+    setCheckoutLoading(tier);
+    try {
+      const functions = getFunctions(app);
+      const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+      const result = await createCheckoutSession({ priceId, tier });
+      const { url } = result.data;
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast({ title: 'Checkout failed', description: err.message, variant: 'destructive' });
+      setCheckoutLoading(null);
+    }
+  };
+
+  // Stripe portal: redirect to Stripe-hosted subscription management page
+  const handleManageSubscription = async () => {
+    setCheckoutLoading('portal');
+    try {
+      const functions = getFunctions(app);
+      const createPortalSession = httpsCallable(functions, 'createPortalSession');
+      const result = await createPortalSession({});
+      const { url } = result.data;
+      window.location.href = url;
+    } catch (err) {
+      console.error('Portal error:', err);
+      toast({ title: 'Could not open portal', description: err.message, variant: 'destructive' });
+      setCheckoutLoading(null);
+    }
+  };
+
+  // Detect successful upgrade redirect (?upgrade=success)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('upgrade') === 'success') {
+      toast({ title: 'Subscription activated!', description: 'Welcome to your new plan.' });
+      navigate('/settings', { replace: true });
+      queryClient.invalidateQueries({ queryKey: ['userSettings'] });
+    }
+  }, [location.search]);
+
+
   useEffect(() => {
     console.log('=== User object changed in Settings ===');
     console.log('Full user object:', user);
@@ -453,16 +502,63 @@ export default function Settings() {
                       {subscriptionTiers[settings?.subscription_tier || 'free'].name} - {subscriptionTiers[settings?.subscription_tier || 'free'].price}
                     </p>
                   </div>
-                  {settings?.subscription_tier === 'free' && (
-                    <Button 
-                      variant="default" 
-                      className="rounded-xl"
-                      onClick={() => alert(t('stripeComingSoon'))}
+                  {settings?.subscription_tier !== 'free' && (
+                    <Button
+                      variant="outline"
+                      className="rounded-xl border-amber-200 text-amber-700 hover:bg-amber-50"
+                      disabled={checkoutLoading === 'portal'}
+                      onClick={handleManageSubscription}
                     >
-                      {t('upgrade')}
+                      {checkoutLoading === 'portal' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      {t('managePlan')}
                     </Button>
                   )}
                 </div>
+
+                {settings?.subscription_tier === 'free' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* Plus */}
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-gray-900">Plus</span>
+                        <span className="text-sm font-bold text-amber-600">$3.99{t('perMonth')}</span>
+                      </div>
+                      <ul className="text-xs text-gray-500 space-y-1">
+                        <li>✓ {t('unlimitedPlanner')}</li>
+                        <li>✓ 10 Courage chats/mo</li>
+                      </ul>
+                      <Button
+                        size="sm"
+                        className="rounded-xl mt-1 bg-amber-500 hover:bg-amber-600 text-white"
+                        disabled={!!checkoutLoading}
+                        onClick={() => handleUpgrade(import.meta.env.VITE_STRIPE_MID_PRICE_ID, 'mid')}
+                      >
+                        {checkoutLoading === 'mid' ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                        {t('choosePlan')}
+                      </Button>
+                    </div>
+                    {/* Pro */}
+                    <div className="rounded-xl border-2 border-amber-400 bg-white p-4 flex flex-col gap-2 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-gray-900">Pro</span>
+                        <span className="text-sm font-bold text-amber-600">$4.99{t('perMonth')}</span>
+                      </div>
+                      <ul className="text-xs text-gray-500 space-y-1">
+                        <li>✓ {t('unlimitedPlanner')}</li>
+                        <li>✓ {t('unlimitedCourage')}</li>
+                      </ul>
+                      <Button
+                        size="sm"
+                        className="rounded-xl mt-1 bg-amber-500 hover:bg-amber-600 text-white"
+                        disabled={!!checkoutLoading}
+                        onClick={() => handleUpgrade(import.meta.env.VITE_STRIPE_TOP_PRICE_ID, 'top')}
+                      >
+                        {checkoutLoading === 'top' ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                        {t('choosePlan')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <Separator />
 
