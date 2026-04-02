@@ -62,7 +62,7 @@ src/
 └── utils/            # Helper functions
 ```
 
-## 📖 Documentation
+## Documentation
 
 - [Firebase Setup Guide](FIREBASE_SETUP.md) - Complete setup and configuration
 
@@ -84,7 +84,7 @@ npm run typecheck  # Type check JavaScript files
 - No data is shared with third parties
 - OpenAI API calls don't store your personal information
 
-## 📝 License
+## License
 
 MIT
 
