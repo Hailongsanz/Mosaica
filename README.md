@@ -88,9 +88,6 @@ npm run typecheck  # Type check JavaScript files
 
 MIT
 
-## Contributing
-
-Contributions welcome! Please feel free to submit a Pull Request.
 
 ---
 
