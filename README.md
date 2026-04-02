@@ -89,7 +89,7 @@ npm run typecheck  # Type check JavaScript files
 MIT
 
 ## Previews
-![Uploading Homescreen.png…]()
+
 <img width="1919" height="942" alt="Homescreen" src="https://github.com/user-attachments/assets/ed16b945-e5d1-4a0c-9e63-cdd0bf77ddc5" />
 
 <img width="1919" height="943" alt="CouragePage" src="https://github.com/user-attachments/assets/9d0bea05-018d-4d9d-b3a0-beb71b3ad1a7" />
